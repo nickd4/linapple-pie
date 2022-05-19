@@ -2,7 +2,7 @@ CXX ?= c++
 CXXFLAGS ?= -O3
 CXXFLAGS += -w
 
-OBJS := $(filter-out Applewin.cpp Util_MemoryTextFile.cpp,$(wildcard *.cpp))
+OBJS := $(filter-out Util_MemoryTextFile.cpp,$(wildcard *.cpp))
 OBJS := $(OBJS:.cpp=.o)
 
 SDL_CONFIG ?= sdl-config
@@ -27,13 +27,9 @@ DATA = ../Master.dsk ../linapple.installed.conf
 
 all: $(EXE)
 
-Applewin: $(OBJS)
-
-$(EXE): Applewin
-#	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
-	mv $^ $@
+$(EXE): $(OBJS)
+	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDLIBS)
 	strip $@
-	@echo " o $(EXE) compiled succesfully"
 	cp $@ ../
 
 clean:
