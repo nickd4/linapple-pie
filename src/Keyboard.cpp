@@ -32,6 +32,19 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include "stdafx.h"
 //#pragma  hdrstop
 
+#if 1 // batch mode
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+extern bool batch_mode;
+
+// ROM will eat first key to put key latch in known state
+// therefore, stuff null key in to sastisfy the first read
+uint8_t batch_key = 0x80;
+#endif
+
 static bool g_bKeybBufferEnable = false;
 
 #define KEY_OLD
@@ -388,6 +401,20 @@ static char ClipboardCurrChar(bool bIncPtr)
 
 BYTE /*__stdcall */KeybReadData (WORD, WORD, BYTE, BYTE, ULONG)
 {
+#if 1 // batch mode
+	if (batch_mode) {
+		if ((batch_key & 0x80) == 0) {
+			int c = getchar();
+			if (c == EOF) {
+				SDL_Event qe = {.type = SDL_QUIT};
+				SDL_PushEvent(&qe);
+			}
+			else
+				batch_key = (uint8_t)(c | 0x80);
+		}
+		return batch_key;
+	}
+#endif
 	keyboardqueries++;
 
 // 	if(g_bPasteFromClipboard)
@@ -424,6 +451,12 @@ BYTE /*__stdcall */KeybReadData (WORD, WORD, BYTE, BYTE, ULONG)
 
 BYTE /*__stdcall */KeybReadFlag (WORD, WORD, BYTE, BYTE, ULONG)
 {
+#if 1 // batch mode
+	if (batch_mode) {
+		batch_key &= 0x7f;
+		return batch_key;
+	}
+#endif
 	keyboardqueries++;
 
 	//

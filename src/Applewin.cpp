@@ -46,6 +46,11 @@ By Mark Ormond.
 #include <strings.h>
 #include <fstream>
 
+#if 1 // batch mode
+#include <stdbool.h>
+
+bool batch_mode;
+#endif
 
 //char VERSIONSTRING[] = "xx.yy.zz.ww";
 
@@ -835,7 +840,9 @@ int main(int argc, char * lpCmdLine[])
 //	LPSTR szImageName_drive1 = NULL; // file names for images of drive1 and drive2
 //	LPSTR szImageName_drive2 = NULL;
 
+#if 0 // batch mode
                   bool bBenchMark = false;
+#endif
 //	bool bBenchMark = (argc > 1 &&
 //		!strcmp(lpCmdLine[1],"-b"));	// if we should start benchmark (-b in command line string)
  
@@ -855,8 +862,12 @@ int main(int argc, char * lpCmdLine[])
                     autoboot = true;
                     break;
                     case 'b':
+#if 1 // batch mode
+                       batch_mode = true;
+#else
                        bBenchMark = true;
                        printf("benchmark");
+#endif
                        break;
                     case 'h':
                        printf("Linapple command options..\n\n -h Show this help message\n -1 Mount disk image in first drive\n -2 Mount disk image in second drive\n -r Auto start emulation\n -b Benchmark and quit\n\n");
@@ -1086,8 +1097,12 @@ int main(int argc, char * lpCmdLine[])
 
 
 		// ENTER THE MAIN MESSAGE LOOP
-		if(bBenchMark) VideoBenchmark(); // start VideoBenchmark and exit
-			else EnterMessageLoop();	// else we just start game
+#if 0 // batch mode
+		if(bBenchMark)
+			VideoBenchmark(); // start VideoBenchmark and exit
+                else
+#endif
+			EnterMessageLoop();	// else we just start game
 // on WM_DESTROY event:
 
 
