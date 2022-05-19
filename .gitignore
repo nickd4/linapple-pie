@@ -1,3 +1,5 @@
-+/src/AppleWin
- +/src/linapple
- +*.o
+*.o
+/Printer.txt
+/linapple
+/src/Applewin
+/src/linapple
