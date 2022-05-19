@@ -41,8 +41,16 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 extern bool batch_mode;
 
 // ROM will eat first key to put key latch in known state
-// therefore, stuff null key in to sastisfy the first read
+// therefore, stuff null key in to satisfy the first read
 uint8_t batch_key = 0x80;
+
+// we need to get n polls within a specific window of cycles to
+// send application the next key, to help avoid it draining the
+// key file until it's really ready to execute the next command
+#define BATCH_N_POLLS 16
+#define BATCH_POLL_WINDOW 1024
+int batch_n_polls = 0;
+uint64_t batch_poll[BATCH_N_POLLS];
 #endif
 
 static bool g_bKeybBufferEnable = false;
@@ -403,7 +411,31 @@ BYTE /*__stdcall */KeybReadData (WORD, WORD, BYTE, BYTE, ULONG)
 {
 #if 1 // batch mode
 	if (batch_mode) {
-		if ((batch_key & 0x80) == 0) {
+		// work out how many polls are stale and can be dropped
+		int i = 0;
+		while (
+			i < batch_n_polls &&
+				 batch_poll[i] + BATCH_POLL_WINDOW <
+					g_nCumulativeCycles
+		)
+			++i;
+
+		// forcibly drop the oldest poll to make room if needed
+		if (i == 0 && batch_n_polls == BATCH_N_POLLS)
+			++i;
+
+		// move queue down and append a new poll at current cycle
+		int j = 0;
+		while (i < batch_n_polls)
+			batch_poll[j++] = batch_poll[i++];
+		batch_poll[j++] = g_nCumulativeCycles;
+		batch_n_polls = j;
+
+		// only if window is full do we consider taking a new char
+		if (
+			(batch_key & 0x80) == 0 &&
+				batch_n_polls == BATCH_N_POLLS
+		) {
 			int c = getchar();
 			if (c == EOF) {
 				SDL_Event qe = {.type = SDL_QUIT};
@@ -411,6 +443,9 @@ BYTE /*__stdcall */KeybReadData (WORD, WORD, BYTE, BYTE, ULONG)
 			}
 			else
 				batch_key = (uint8_t)(c | 0x80);
+
+			// empty the window again each time we take a char
+			batch_n_polls = 0;
 		}
 		return batch_key;
 	}
