@@ -1111,12 +1111,14 @@ static bool bIamFullScreened;	// for correct fullscreen switching
 void SetFullScreenMode () {
 // It is simple, as almost everything in SDL. Thank you, Sam Lantinga. My appreciation! ^_^ --bb
 
+#if 0 // Nick
  if(!bIamFullScreened) {
 	 bIamFullScreened = true;
   	/*fullscreen =*/ SDL_WM_ToggleFullScreen(screen);
 	//if(fullscreen) // we are in full screen disable mouse cursor
 		SDL_ShowCursor(SDL_DISABLE);
  }
+#endif
 }
 
 //===========================================================================
